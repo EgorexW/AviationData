@@ -1,0 +1,16 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Staż", "Staż\Staż.csproj", "{2A7C4EB5-C0DB-4C08-A53A-543CF102F13E}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{2A7C4EB5-C0DB-4C08-A53A-543CF102F13E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2A7C4EB5-C0DB-4C08-A53A-543CF102F13E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2A7C4EB5-C0DB-4C08-A53A-543CF102F13E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2A7C4EB5-C0DB-4C08-A53A-543CF102F13E}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
