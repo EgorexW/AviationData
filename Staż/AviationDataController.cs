@@ -1,8 +1,10 @@
 using System.Diagnostics;
-using RestSharp;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Microsoft.AspNetCore.Mvc;
+using RestSharp;
+using Serilog;
+using Serilog.Core;
 
 namespace Staż.Controllers;
 
@@ -10,32 +12,57 @@ namespace Staż.Controllers;
 [Route("[controller]")]
 public class AviationDataController : ControllerBase
 {
-    HttpClient sharedClient = new();
+    readonly IConfiguration configuration;
+    readonly Logger logger;
+
+    public AviationDataController(IConfiguration configuration)
+    {
+        this.configuration = configuration;
+        logger = new LoggerConfiguration()
+            .MinimumLevel.Debug()
+            .WriteTo.Console()
+            .WriteTo.File("logs/AviationData.txt", rollingInterval: RollingInterval.Minute)
+            .CreateLogger();
+    }
 
     [HttpGet]
-    public async Task<string> GetFlightsInTheAir(string departureCode, string arrivalCode)
+    public string GetFlightsInTheAir(string departureCode, string arrivalCode)
     {
-        var output = "";
-        var request = await GetRequest(departureCode, arrivalCode);
-        // Use restsharp
+        var request = GetRequest(departureCode, arrivalCode);
         var data = JsonSerializer.Deserialize<JsonNode>(request);
-        Debug.Assert(data != null, nameof(data) + " != null");
-        foreach (var flight in data["data"]!.AsArray()){
-            var flightText = $"Flight: nr: {flight!["flight"]!["number"]} airline: {flight["airline"]!["name"]} estimated time of arrival: {flight["arrival"]!["estimated"]}\n";
-            output += flightText;
+        if (data == null){
+            logger.Error("Response: Data is null");
+            throw new Exception("Data is null");
         }
+        var output = "";
+        foreach (var flight in data["data"]!.AsArray()){
+            output += Output(flight!);
+        }
+        logger.Information("Returning output: \n{Output}", output);
         return output;
     }
 
-    async Task<string> GetRequest(string departure, string arrival)
+    static string Output(JsonNode flight)
     {
-        var requestUri = $"http://api.aviationstack.com/v1/flights?access_key={YOUR_ACCESS_KEY}&dep_iata={departure}&arr_iata{arrival}&flight_status=active";
-        Console.WriteLine("Request URI: " + requestUri); //replace with serilog
-        Console.WriteLine("Request sent");
-        var response = await sharedClient.GetStringAsync(requestUri);
-        Console.WriteLine("Response received");
-        return response;
+        var estimated = flight["arrival"]!["estimated"];
+        var airline = flight["airline"]!["name"];
+        var flightNr = flight["flight"]!["number"];
+        var flightText = $"Flight: nr: {flightNr}; Airline: {airline}; Estimated time of arrival: {estimated}\n";
+        return flightText;
     }
 
-    const string YOUR_ACCESS_KEY = "656d03ab8936ca69c67727f8cfc8a299"; //Move to appsettings.json
+    string GetRequest(string departure, string arrival)
+    {
+        var requestUri = $"/v1/flights?access_key={configuration["ApiKey"]}&dep_iata={departure}&arr_iata{arrival}&flight_status=active";
+        logger.Information("Request: {RequestUri}", requestUri);
+        var client = new RestClient("http://api.aviationstack.com");
+        var request = new RestRequest(requestUri);
+        var response = client.Get(request);
+        logger.Information("Response: {StatusCode}", response.StatusCode);
+        if (response.StatusCode != System.Net.HttpStatusCode.OK){
+            logger.Error("Response: {ErrorMessage}", response.ErrorMessage);
+            throw new Exception(response.ErrorMessage);
+        }
+        return response.Content!;
+    }
 }
