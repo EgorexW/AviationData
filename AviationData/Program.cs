@@ -1,4 +1,4 @@
-using Staż.Controllers;
+using AviationData.Controllers;
 
 var builder = WebApplication.CreateBuilder(args);
 

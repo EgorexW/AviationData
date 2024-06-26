@@ -6,7 +6,7 @@ using RestSharp;
 using Serilog;
 using Serilog.Core;
 
-namespace Staż.Controllers;
+namespace AviationData.Controllers;
 
 [ApiController]
 [Route("[controller]")]
